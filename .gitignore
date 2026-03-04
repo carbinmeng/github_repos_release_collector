@@ -1,0 +1,24 @@
+# Rust build artifacts
+target/
+Cargo.lock.bak
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup and temporary files
+*.bak
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Environment files
+.env
+.env.local
