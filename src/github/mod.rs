@@ -57,7 +57,10 @@ impl GithubClient {
             repo, self.per_page
         );
 
-        let mut request = self.client.get(&url);
+        let mut request = self.client.get(&url)
+            // Add GitHub API version header
+            .header("Accept", "application/vnd.github+json")
+            .header("X-GitHub-Api-Version", "2022-11-28");
 
         // Add authentication header if token is available
         if let Some(token) = &self.token {
@@ -118,7 +121,10 @@ impl GithubClient {
                 repo, self.per_page, page
             );
 
-            let mut request = self.client.get(&url);
+            let mut request = self.client.get(&url)
+                // Add GitHub API version header
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2022-11-28");
 
             if let Some(token) = &self.token {
                 request = request.header("Authorization", format!("Bearer {}", token));

@@ -558,15 +558,38 @@ impl Database {
 }
 
 fn normalize_repo(repo: &str) -> String {
+    // Remove any surrounding quotes or backticks
+    let trimmed = repo
+        .trim()
+        .trim_start_matches('`')
+        .trim_end_matches('`')
+        .trim_start_matches('"')
+        .trim_end_matches('"')
+        .trim_start_matches("'")
+        .trim_end_matches("'");
+    
     // Handle https://github.com/owner/repo format
-    if repo.contains("github.com") {
-        if let Some(path) = repo.strip_prefix("https://github.com/") {
-            return path.trim_end_matches('/').to_string();
-        } else if let Some(path) = repo.strip_prefix("http://github.com/") {
-            return path.trim_end_matches('/').to_string();
-        }
+    if trimmed.contains("github.com") {
+        let path = if let Some(p) = trimmed.strip_prefix("https://github.com/") {
+            p
+        } else if let Some(p) = trimmed.strip_prefix("http://github.com/") {
+            p
+        } else if let Some(p) = trimmed.strip_prefix("github.com/") {
+            p
+        } else {
+            trimmed
+        };
+        
+        // Remove .git suffix if present
+        let path_without_git = path.trim_end_matches(".git");
+        return path_without_git.trim_end_matches('/').to_string();
     }
-    repo.trim_end_matches('/').to_string()
+    
+    // For non-GitHub URLs or direct owner/repo format
+    trimmed
+        .trim_end_matches(".git")
+        .trim_end_matches('/')
+        .to_string()
 }
 
 fn calculate_hash(content: &str) -> String {
