@@ -89,6 +89,10 @@ pub enum CliCommand {
         #[arg(long, short, default_value = "50")]
         limit: usize,
         
+        /// Show releases from last N days
+        #[arg(long)]
+        days: Option<u32>,
+        
         /// Include deleted releases
         #[arg(long)]
         include_deleted: bool,

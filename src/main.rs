@@ -100,8 +100,8 @@ fn run(cli: Cli) -> Result<(), Error> {
             println!("Updated configuration: {} = {}", key, value);
             Ok(())
         }
-        CliCommand::QueryList { repo, limit, include_deleted } => {
-            let releases = db.query_releases(repo.as_deref(), Some(limit), include_deleted)?;
+        CliCommand::QueryList { repo, limit, days, include_deleted } => {
+            let releases = db.query_releases(repo.as_deref(), Some(limit), days, include_deleted)?;
             for r in releases {
                 println!("{}", r);
             }

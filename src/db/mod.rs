@@ -286,13 +286,21 @@ impl Database {
         Ok(())
     }
 
-    pub fn query_releases(&self, repo: Option<&str>, limit: Option<usize>, include_deleted: bool) -> Result<Vec<Release>> {
+    pub fn query_releases(&self, repo: Option<&str>, limit: Option<usize>, days: Option<u32>, include_deleted: bool) -> Result<Vec<Release>> {
         let limit = limit.unwrap_or(50);
         let repo_filter = repo.map(|r| normalize_repo(r));
         let conn = self.conn.lock().unwrap();
 
         let base_sql =
             "SELECT release_id, repo, tag_name, name, draft, prerelease, created_at, published_at, updated_at, html_url, body, body_hash, is_deleted, deleted_at FROM releases";
+
+        // Build time filter condition
+        let time_filter = if let Some(days) = days {
+            let cutoff_date = Utc::now() - chrono::Duration::days(days as i64);
+            format!("AND published_at >= '{}'", cutoff_date.to_rfc3339())
+        } else {
+            String::new()
+        };
 
         let map_row = |row: &rusqlite::Row<'_>| {
             Ok(Release {
@@ -315,27 +323,31 @@ impl Database {
 
         let releases = match (repo_filter.as_deref(), include_deleted) {
             (Some(repo), true) => {
-                let sql = format!("{base_sql} WHERE repo = ?1 ORDER BY published_at DESC LIMIT ?2");
+                let sql = format!("{base_sql} WHERE repo = ?1 {} ORDER BY published_at DESC LIMIT ?2", time_filter);
                 let mut stmt = conn.prepare(&sql)?;
                 let rows = stmt.query_map(params![repo, limit], map_row)?;
                 rows.collect::<SqliteResult<Vec<_>>>()?
             }
             (Some(repo), false) => {
                 let sql = format!(
-                    "{base_sql} WHERE repo = ?1 AND is_deleted = 0 ORDER BY published_at DESC LIMIT ?2"
+                    "{base_sql} WHERE repo = ?1 AND is_deleted = 0 {} ORDER BY published_at DESC LIMIT ?2", 
+                    time_filter
                 );
                 let mut stmt = conn.prepare(&sql)?;
                 let rows = stmt.query_map(params![repo, limit], map_row)?;
                 rows.collect::<SqliteResult<Vec<_>>>()?
             }
             (None, true) => {
-                let sql = format!("{base_sql} ORDER BY published_at DESC LIMIT ?1");
+                let sql = format!("{base_sql} WHERE 1=1 {} ORDER BY published_at DESC LIMIT ?1", time_filter);
                 let mut stmt = conn.prepare(&sql)?;
                 let rows = stmt.query_map(params![limit], map_row)?;
                 rows.collect::<SqliteResult<Vec<_>>>()?
             }
             (None, false) => {
-                let sql = format!("{base_sql} WHERE is_deleted = 0 ORDER BY published_at DESC LIMIT ?1");
+                let sql = format!(
+                    "{base_sql} WHERE is_deleted = 0 {} ORDER BY published_at DESC LIMIT ?1", 
+                    time_filter
+                );
                 let mut stmt = conn.prepare(&sql)?;
                 let rows = stmt.query_map(params![limit], map_row)?;
                 rows.collect::<SqliteResult<Vec<_>>>()?

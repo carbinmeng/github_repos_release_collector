@@ -40,10 +40,10 @@ pub struct Config {
 }
 
 fn default_concurrency() -> usize { 5 }
-fn default_incremental_interval() -> u64 { 3600 } // 1 hour
+fn default_incremental_interval() -> u64 { 43200 } // 12 hours
 fn default_full_interval() -> u64 { 86400 } // 24 hours
 fn default_timeout() -> u64 { 30 }
-fn default_per_page() -> usize { 100 }
+fn default_per_page() -> usize { 20 }
 fn default_max_retries() -> usize { 3 }
 
 impl Config {

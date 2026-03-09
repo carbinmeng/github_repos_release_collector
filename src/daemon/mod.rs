@@ -202,11 +202,10 @@ pub fn daemon_loop(config: &Config, db: &crate::db::Database) -> Result<()> {
     use crate::sync;
     
     let mut last_incremental = std::time::Instant::now();
-    let mut last_full = std::time::Instant::now();
 
     println!("Daemon mode started");
     println!("Incremental interval: {}s", config.incremental_interval);
-    println!("Full interval: {}s", config.full_interval);
+    println!("Full sync disabled - only incremental sync will run");
 
     loop {
         let now = std::time::Instant::now();
@@ -226,20 +225,7 @@ pub fn daemon_loop(config: &Config, db: &crate::db::Database) -> Result<()> {
             last_incremental = now;
         }
 
-        // Check if it's time for full sync
-        if now.duration_since(last_full).as_secs() >= config.full_interval {
-            println!("Running full sync...");
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            match rt.block_on(sync::run_sync(config, db, true)) {
-                Ok(_) => {
-                    println!("Full sync completed");
-                }
-                Err(e) => {
-                    eprintln!("Full sync failed: {}", e);
-                }
-            }
-            last_full = now;
-        }
+        // Full sync removed from daemon - only incremental sync runs
 
         // Sleep for a bit before checking again
         std::thread::sleep(Duration::from_secs(60));
