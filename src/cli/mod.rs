@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(name = "grc")]
-#[command(version = "1.0.0")]
+#[command(version = "1.1.1")]
 #[command(about = "GitHub Release text mirror system", long_about = None)]
 pub struct Cli {
     #[arg(long, hide = true, global = true)]
